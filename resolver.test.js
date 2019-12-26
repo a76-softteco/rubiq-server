@@ -89,21 +89,62 @@ test('resolve all', () => {
     expect(result).toStrictEqual({
         PNR04: [ 'F1' ],
         PNR02: [ 'F4' ],
-        PNR10: [ 'F2' ],
-        PNR01: [ 'F5' ],
+        PNR10: null,
+        PNR01: [ 'F2' ],
         PNR07: [ 'F5' ],
         PNR08: [ 'F6' ],
         PNR09: [ 'F6' ],
         PNR05: [ 'F4' ],
-        PNR06: [ 'F5' ]
+        PNR06: [ 'F2' ]
     });
 
     expect(flights).toStrictEqual([
         { id: 'F1', origin: 'A', destination: 'B', capacity: 0 },
         { id: 'F2', origin: 'A', destination: 'B', capacity: 0 },
         { id: 'F4', origin: 'A', destination: 'C', capacity: 0 },
-        { id: 'F5', origin: 'A', destination: 'B', capacity: 1 },
+        { id: 'F5', origin: 'A', destination: 'B', capacity: 5 },
         { id: 'F6', origin: 'A', destination: 'C', capacity: 2 }
+    ]);
+});
+
+test('resolve all complex itinerary', () => {
+    testFlights = [
+        { id: 'F1', origin: 'A', destination: 'B', capacity: 8 },
+        { id: 'F2', origin: 'B', destination: 'C', capacity: 4 },
+        { id: 'F4', origin: 'A', destination: 'C', capacity: 5 }
+    ];
+
+    const testReservations = [
+        { id: 'PNR04', count: 4, origin: 'A', destination: 'C' },
+        { id: 'PNR02', count: 3, origin: 'A', destination: 'C' },
+        { id: 'PNR10', count: 3, origin: 'A', destination: 'C' },
+    ];
+
+    const result = resolveAll(testReservations, testFlights);
+    expect(result).toStrictEqual({ PNR04: [ 'F4' ], PNR02: [ 'F1', 'F2' ], PNR10: null });
+});
+
+test('search complex itinerary', () => {
+    testFlights = [
+        { id: 'F1', origin: 'A', destination: 'B', capacity: 8 },
+        { id: 'F2', origin: 'B', destination: 'C', capacity: 4 },
+        { id: 'F4', origin: 'A', destination: 'C', capacity: 5 }
+    ];
+
+    const testReservations = [
+        { id: 'PNR04', count: 4, origin: 'A', destination: 'C' },
+        { id: 'PNR02', count: 3, origin: 'A', destination: 'C' },
+        { id: 'PNR10', count: 3, origin: 'A', destination: 'C' },
+    ];
+
+    const result = searchItinerary(testReservations[1], testFlights);
+
+    expect(result).toStrictEqual([
+        [
+            { id: 'F1', origin: 'A', destination: 'B', capacity: 8 },
+            { id: 'F2', origin: 'B', destination: 'C', capacity: 4 }
+        ],
+        [ { id: 'F4', origin: 'A', destination: 'C', capacity: 5 } ]
     ]);
 });
 

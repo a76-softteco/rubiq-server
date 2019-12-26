@@ -1,3 +1,7 @@
+function getFlightsByOrigin(origin, flights) {
+    return flights.filter(flight => flight.origin === origin);
+} 
+
 function getMinItinerary(itineraries) {
     // maps list of itineraries to the list of total capacities
     const capacities = itineraries.map(itinerary => itinerary.reduce((sum, {capacity}) => sum + capacity, 0));
@@ -8,15 +12,15 @@ function getMinItinerary(itineraries) {
     return itineraries[capacities.indexOf(min)];
 }
 
-
 function nextItinerary(reservation, flights, origin, itinerary, result) {
     // Either proves that an itinerary is suitable to reach the reservation's destination, or tries to extend it by the next possible flight
     // The itinerary is represented as an ordered array of flights
 
     const { destination, count } = reservation;
+
     if (origin !== destination) {
         // if destination has not been reached yet
-        for (const flight of flights.filter(flight => flight.origin === origin)) {
+        for (const flight of getFlightsByOrigin(origin, flights)) {
             // for each flight departured from the intermidiate point of the itinerary
 
             if (flight.capacity >= count && itinerary.indexOf(flight) === -1) {
@@ -36,7 +40,7 @@ function nextItinerary(reservation, flights, origin, itinerary, result) {
 function searchItinerary(reservation, flights) {
     const { origin, count } = reservation;
     const result = [];
-    for (const flight of flights.filter(flight => flight.origin = origin)) {
+    for (const flight of getFlightsByOrigin(origin, flights)) {
         // for each flight departured from the reservation's origin
         if (flight.capacity >= count) { 
             // if flight's capacity can serve reservation
