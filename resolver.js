@@ -69,9 +69,9 @@ function resolveReservation(reservation, flights) {
 }
 
 function resolveAll(reservations, flights) {
-
     // sort reservations decending by count to resolve the most valuable ones at first
     reservations.sort((a, b) => b.count - a.count);
+
     const result = {};
 
     for (const reservation of reservations) {
