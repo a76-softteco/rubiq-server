@@ -2,6 +2,18 @@ function getFlightsByOrigin(origin, flights) {
     return flights.filter(flight => flight.origin === origin);
 } 
 
+function applyItinerary(itinerary, {count}) {
+    for (const flight of itinerary) {
+        flight.capacity -= count;
+    }
+}
+
+function recoverItinerary(itinerary, {count}) {
+    for (const flight of itinerary) {
+        flight.capacity += count;
+    }
+}
+
 function getMinItinerary(itineraries) {
     // maps list of itineraries to the list of total capacities
     const capacities = itineraries.map(itinerary => itinerary.reduce((sum, {capacity}) => sum + capacity, 0));
@@ -10,6 +22,34 @@ function getMinItinerary(itineraries) {
 
     // returns an itinerary corresponding to the min capacity
     return itineraries[capacities.indexOf(min)];
+}
+
+function getOptimalItinerary(itineraries, reservations, flights, index) {
+    const unresolved = {};
+    const currentReservation = reservations[index];
+
+    for (let itIndex = 0; itIndex < itineraries.length; itIndex++) {
+        const itinerary = itineraries[itIndex];
+        unresolved[itIndex] = 0;
+        applyItinerary(itinerary, currentReservation);
+        
+        for (let resIndex = index + 1; resIndex < reservations.length; resIndex++) {
+            const reservation = reservations[resIndex];
+            const nextItineraries = searchItinerary(reservation, flights);
+
+            if (nextItineraries.length === 0) {
+                unresolved[itIndex] += reservation.count;
+            }
+        }
+        recoverItinerary(itinerary, currentReservation);
+    }
+
+    const minUnresolved = Math.min(...Object.values(unresolved));
+    
+    const minIndexes = Object.keys(unresolved).filter(key => unresolved[key] === minUnresolved).map(index => +index);
+    const candidates = itineraries.filter((_, index) => minIndexes.indexOf(index) !== -1);
+
+    return getMinItinerary(candidates);
 }
 
 function nextItinerary(reservation, flights, origin, itinerary, result) {
@@ -51,19 +91,16 @@ function searchItinerary(reservation, flights) {
     return result;
 }
 
-function resolveReservation(reservation, flights) {
+function resolveReservation(reservations, flights, index) {
+    const reservation = reservations[index];
     const itineraries = searchItinerary(reservation, flights);
 
     if (itineraries.length === 0) {
         return null;
     }
 
-    const itinerary = getMinItinerary(itineraries);
-    
-    // apply itinerary to flights
-    for (const flight of itinerary) {
-        flight.capacity -= reservation.count;
-    }
+    const itinerary = getOptimalItinerary(itineraries, reservations, flights, index);
+    applyItinerary(itinerary, reservation);
 
     return itinerary.map(({id}) => id);
 }
@@ -74,8 +111,9 @@ function resolveAll(reservations, flights) {
 
     const result = {};
 
-    for (const reservation of reservations) {
-        result[reservation.id] = resolveReservation(reservation, flights);
+    for (let index = 0; index < reservations.length; index++) {
+        const {id} = reservations[index];
+        result[id] = resolveReservation(reservations, flights, index);
     }
 
     return result;

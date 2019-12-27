@@ -84,8 +84,8 @@ test('search itinerary', () => {
 
 test('resolve reservation', () => {
     const flights = getFlights();
-    const reservation =  { id: 'PNR01', count: 3, origin: 'A', destination: 'B' };
-    const itinerary = resolveReservation(reservation, flights);
+    const reservations =  [{ id: 'PNR01', count: 3, origin: 'A', destination: 'B' }];
+    const itinerary = resolveReservation(reservations, flights, 0);
 
     expect(itinerary).toStrictEqual(['F2']);
     expect(flights).toStrictEqual([
@@ -98,9 +98,9 @@ test('resolve reservation', () => {
 });
 
 test('resolve reservation unresolved', () => {
-    const unresolved = { id: 'PNR04', count: 10, origin: 'A', destination: 'B' };
+    const unresolved = [{ id: 'PNR04', count: 10, origin: 'A', destination: 'B' }];
     const flights = getFlights();
-    const itinerary = resolveReservation(unresolved, flights);
+    const itinerary = resolveReservation(unresolved, flights, 0);
 
     expect(itinerary).toBe(null);
 });
@@ -155,19 +155,14 @@ test('resolve all complex itinerary', () => {
 });
 
 test('search complex itinerary', () => {
-    testFlights = [
+    const flights = [
         { id: 'F1', origin: 'A', destination: 'B', capacity: 8 },
         { id: 'F2', origin: 'B', destination: 'C', capacity: 4 },
         { id: 'F4', origin: 'A', destination: 'C', capacity: 5 }
     ];
 
-    const testReservations = [
-        { id: 'PNR04', count: 4, origin: 'A', destination: 'C' },
-        { id: 'PNR02', count: 3, origin: 'A', destination: 'C' },
-        { id: 'PNR10', count: 3, origin: 'A', destination: 'C' },
-    ];
-
-    const result = searchItinerary(testReservations[1], testFlights);
+    const reservation = { id: 'PNR02', count: 3, origin: 'A', destination: 'C' };
+    const result = searchItinerary(reservation, flights);
 
     expect(result).toStrictEqual([
         [
@@ -178,4 +173,30 @@ test('search complex itinerary', () => {
     ]);
 });
 
+test('resolve unbalanced flights', () => {
+    const getTestFlights = () => [
+        { id: 'F1', origin: 'A', destination: 'B', capacity: 5 },
+        { id: 'F2', origin: 'B', destination: 'C', capacity: 4 },
+        { id: 'F4', origin: 'A', destination: 'C', capacity: 100 }
+    ];
 
+    const flights = getTestFlights();
+
+    const reservations = [
+        { id: 'PNR01', count: 2, origin: 'B', destination: 'C' },
+        { id: 'PNR02', count: 4, origin: 'A', destination: 'C' }
+    ];
+
+    const result = resolveAll(reservations, flights);
+
+    expect(result).toStrictEqual({
+        PNR02: ['F4'],
+        PNR01: ['F2']
+    });
+
+    // Apply resolution backward to recover initial flights state
+    proveResolution(reservations, flights, result);
+    
+    // Check if recovering equals to the initial state
+    expect(flights).toStrictEqual(getTestFlights());
+});
