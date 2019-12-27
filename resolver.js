@@ -25,30 +25,37 @@ function getMinItinerary(itineraries) {
 }
 
 function getOptimalItinerary(itineraries, reservations, flights, index) {
-    const unresolved = {};
+    const unresolved = [];
     const currentReservation = reservations[index];
 
     for (let itIndex = 0; itIndex < itineraries.length; itIndex++) {
         const itinerary = itineraries[itIndex];
+        // Let's current iteration doesn't cause any unresolved reservations
         unresolved[itIndex] = 0;
+        // Apply itinerary
         applyItinerary(itinerary, currentReservation);
         
+        // For each not processed reservation we need to investigate how current itinerary usage affects its resolution
         for (let resIndex = index + 1; resIndex < reservations.length; resIndex++) {
             const reservation = reservations[resIndex];
-            const nextItineraries = searchItinerary(reservation, flights);
 
+            // Search all posible itineraries
+            const nextItineraries = searchItinerary(reservation, flights);
+            
+            // If not found
             if (nextItineraries.length === 0) {
+                // Increase unresolved counter by the reservation count
                 unresolved[itIndex] += reservation.count;
             }
         }
+        // Recover itinerary
         recoverItinerary(itinerary, currentReservation);
     }
 
-    const minUnresolved = Math.min(...Object.values(unresolved));
+    const min = Math.min(...unresolved);
+    const candidates = itineraries.filter((_, index) => unresolved[index] === min);
     
-    const minIndexes = Object.keys(unresolved).filter(key => unresolved[key] === minUnresolved).map(index => +index);
-    const candidates = itineraries.filter((_, index) => minIndexes.indexOf(index) !== -1);
-
+    // Additional optimization perhaps not necessary and just a first result is good enough
     return getMinItinerary(candidates);
 }
 
