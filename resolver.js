@@ -42,7 +42,7 @@ function getOptimalItinerary(itineraries, reservations, flights, index) {
             // Search all posible itineraries
             const nextItineraries = searchItinerary(reservation, flights);
             
-            // If not found
+            // If not found any itinerary for reservation
             if (nextItineraries.length === 0) {
                 // Increase unresolved counter by the reservation count
                 unresolved[itIndex] += reservation.count;
